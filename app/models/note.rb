@@ -18,4 +18,8 @@ class Note < ApplicationRecord
   belongs_to :user
   belongs_to :utility
   enum note_type: { review: 0, critique: 1 }
+
+  def word_count
+    content.split.size
+  end
 end
