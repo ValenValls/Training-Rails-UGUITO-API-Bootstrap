@@ -39,7 +39,7 @@ class Note < ApplicationRecord
   def validate_word_count
     return unless utility && review_exceeds_word_limit?
     error_message = I18n.t(
-      'error_node_validation_word_limit',
+      'error_note_validation_word_limit',
       utility_name: utility.name,
       limit: utility.short_word_count_threshold
     )

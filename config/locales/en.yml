@@ -31,4 +31,4 @@
 
 en:
   hello: "Hello world"
-  error_node_validation_word_limit: "has too many words, reviews have a limit of %{limit} words for %{utility_name}"
+  error_note_validation_word_limit: "has too many words, reviews have a limit of %{limit} words for %{utility_name}"
