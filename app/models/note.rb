@@ -20,8 +20,8 @@ class Note < ApplicationRecord
   belongs_to :utility
   enum note_type: { review: 0, critique: 1 }
 
-  def word_count
-    content.split.size
+  def review_exceeds_word_limit?
+    note_type == 'review' && content_length != 'short'
   end
 
   def content_length
@@ -32,14 +32,16 @@ class Note < ApplicationRecord
     'long'
   end
 
-  def review_exceeds_word_limit?
-    note_type == 'review' && content_length != 'short'
+  def word_count
+    content.split.size
   end
+
+  private
 
   def validate_word_count
     return unless utility && review_exceeds_word_limit?
     error_message = I18n.t(
-      'error_note_validation_word_limit',
+      'active_record.errors.note.review_too_long',
       utility_name: utility.name,
       limit: utility.short_word_count_threshold
     )

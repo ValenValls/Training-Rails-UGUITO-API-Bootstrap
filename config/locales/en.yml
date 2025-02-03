@@ -30,5 +30,7 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
-  hello: "Hello world"
-  error_note_validation_word_limit: "has too many words, reviews have a limit of %{limit} words for %{utility_name}"
+  active_record:
+    errors:
+      note:
+        review_too_long: "has too many words, reviews have a limit of %{limit} words for %{utility_name}"
