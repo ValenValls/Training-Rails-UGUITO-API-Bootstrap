@@ -30,4 +30,7 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 es:
-  hello: "Hola Mundo!"
+  active_record:
+    errors:
+      note:
+        review_too_long: "tiene demasiadas palabras, las reviews tienen un limite de %{limit} palabras para %{utility_name}"
