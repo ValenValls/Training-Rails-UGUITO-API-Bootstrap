@@ -56,7 +56,7 @@ shared_examples 'review for utility' do
 end
 
 describe Note, type: :model do
-  context 'when creating with factory' do
+  context 'when creating' do
     subject(:note) { build(:note) }
 
     it { is_expected.to validate_presence_of(:content) }
