@@ -30,7 +30,6 @@ module Api
 
       def filtering_params
         params.transform_keys! { |key| key == 'type' ? 'note_type' : key }
-
         params.permit(%i[note_type])
       end
     end
