@@ -24,6 +24,8 @@ class Utility < ApplicationRecord
 
   has_many :users, dependent: :destroy
 
+  has_many :notes, dependent: :destroy
+
   validates :name, uniqueness: true
   validates :name, :type, presence: true
 
