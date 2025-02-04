@@ -20,15 +20,9 @@ class Note < ApplicationRecord
   belongs_to :utility
   enum note_type: { review: 0, critique: 1 }
 
-  def review_exceeds_word_limit?
-    note_type == 'review' && content_length != 'short'
-  end
-
   def content_length
-    short_word_count_threshold = utility.short_word_count_threshold
-    medium_word_count_threshold = utility.medium_word_count_threshold
-    return 'short' if word_count <= short_word_count_threshold
-    return 'medium' if word_count <= medium_word_count_threshold
+    return 'short' if word_count.between(0, short_threshold)
+    return 'medium' if word_count.between(short_threshold + 1, medium_threshold)
     'long'
   end
 
@@ -39,12 +33,24 @@ class Note < ApplicationRecord
   private
 
   def validate_word_count
-    return unless utility && review_exceeds_word_limit?
+    return unless errors.blank? && review_exceeds_word_limit?
     error_message = I18n.t(
       'active_record.errors.note.review_too_long',
       utility_name: utility.name,
       limit: utility.short_word_count_threshold
     )
     errors.add(:content, error_message)
+  end
+
+  def review_exceeds_word_limit?
+    note_type == 'review' && content_length != 'short'
+  end
+
+  def short_threshold
+    utility.short_word_count_threshold
+  end
+
+  def medium_threshold
+    utility.medium_word_count_threshold
   end
 end
