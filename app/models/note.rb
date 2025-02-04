@@ -37,7 +37,7 @@ class Note < ApplicationRecord
     error_message = I18n.t(
       'active_record.errors.note.review_too_long',
       utility_name: utility.name,
-      limit: utility.short_word_count_threshold
+      limit: short_threshold
     )
     errors.add(:content, error_message)
   end
