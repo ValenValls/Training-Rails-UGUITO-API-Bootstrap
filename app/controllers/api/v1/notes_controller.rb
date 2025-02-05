@@ -6,14 +6,10 @@ module Api
       end
 
       def show
-        render json: show_note, status: :ok, serializer: NoteSerializer
+        render json: Note.find(params[:id]), status: :ok
       end
 
       private
-
-      def show_note
-        Note.find(params[:id])
-      end
 
       def notes_paged
         notes_ordered.page(params[:page]).per(params[:page_size])
