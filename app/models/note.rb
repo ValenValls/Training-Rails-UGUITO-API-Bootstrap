@@ -24,7 +24,7 @@ class Note < ApplicationRecord
     length_by_word_count = { 0..short_threshold => 'short',
                              (short_threshold + 1)..medium_threshold => 'medium',
                              (medium_threshold + 1).. => 'long' }
-    length_by_word_count.select { |key| key.include? word_count }.values.first
+    length_by_word_count.select { |count_range| count_range.include? word_count }.values.first
   end
 
   def word_count
