@@ -2,7 +2,7 @@ module Api
   module V1
     class NotesController < ApplicationController
       def index
-        render json: notes_paged, status: :ok, each_serializer: IndexNoteSerializer
+        render json: paged_notes, status: :ok, each_serializer: IndexNoteSerializer
       end
 
       def show
@@ -11,16 +11,16 @@ module Api
 
       private
 
-      def notes_paged
-        notes_ordered.page(params[:page]).per(params[:page_size])
+      def paged_notes
+        ordered_notes.page(params[:page]).per(params[:page_size])
       end
 
-      def notes_ordered
-        return notes_filtered.order(created_at: params[:order]) if params[:order].present?
-        notes_filtered
+      def ordered_notes
+        return filtered_notes.order(created_at: params[:order]) if params[:order].present?
+        filtered_notes
       end
 
-      def notes_filtered
+      def filtered_notes
         Note.where(filtering_params)
       end
 
