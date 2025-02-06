@@ -1,12 +1,13 @@
 module Api
   module V1
     class NotesController < ApplicationController
+      before_action :authenticate_user!
       def index
         render json: paged_notes, status: :ok, each_serializer: IndexNoteSerializer
       end
 
       def show
-        render json: Note.find(params[:id]), status: :ok
+        render json: current_user.notes.find(params[:id]), status: :ok
       end
 
       private
@@ -21,7 +22,7 @@ module Api
       end
 
       def filtered_notes
-        Note.where(filtering_params)
+        current_user.notes.where(filtering_params)
       end
 
       def filtering_params
