@@ -21,9 +21,14 @@ class Note < ApplicationRecord
   enum note_type: { review: 0, critique: 1 }
 
   def content_length
-    return 'short' if word_count.between(0, short_threshold)
-    return 'medium' if word_count.between(short_threshold + 1, medium_threshold)
-    'long'
+    case word_count
+    when 0..short_threshold
+      'short'
+    when (short_threshold + 1)..medium_threshold
+      'medium'
+    else
+      'long'
+    end
   end
 
   def word_count
