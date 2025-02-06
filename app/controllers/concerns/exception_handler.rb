@@ -13,6 +13,9 @@ module ExceptionHandler
     end
     rescue_from Exceptions::UtilityUnavailableError, with: :render_utility_unavailable
     rescue_from Exceptions::InvalidParameterError, with: :render_invalid_parameter
+    rescue_from Exceptions::MissingParametersError, with: :render_missing_parameters
+    rescue_from Exceptions::ContentLengthInvalidError, with: :render_invalid_content_length
+    rescue_from Exceptions::NoteTypeInvalidError, with: :render_note_type_invalid
   end
 
   private
@@ -44,5 +47,19 @@ module ExceptionHandler
 
   def render_utility_unavailable
     render_error(:utility_unavailable, status: :internal_server_error)
+  end
+
+  def render_missing_parameters
+    message = I18n.t('response.errors.note.missing_params')
+    render json: { error: message }, status: :bad_request
+  end
+
+  def render_note_type_invalid
+    message = I18n.t('response.errors.note.invalid_note_type')
+    render json: { error: message }, status: :unprocessable_entity
+  end
+
+  def render_invalid_content_length(error)
+    render json: { error: error.message }, status: :unprocessable_entity
   end
 end

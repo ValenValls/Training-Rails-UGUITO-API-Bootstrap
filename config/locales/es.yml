@@ -31,11 +31,15 @@
 
 es:
   active_record:
+    errors:
+      note:
+        review_too_long: "una reseña no puede superar las %{limit} palabras para %{utility_name}"
+  response:
     messages:
       note:
         created_succesfully: "Nota creada con exito"
     errors:
       note:
-        review_too_long: "Una reseña no puede superar las %{limit} palabras para %{utility_name}"
+        review_too_long: "Reseñas no pueden tener más de %{limit} palabras"
         missing_params: "Faltan parametros requeridos"
         invalid_note_type: "El tipo de nota no es válido"
