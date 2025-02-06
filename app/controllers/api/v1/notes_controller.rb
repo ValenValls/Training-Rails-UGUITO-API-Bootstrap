@@ -63,7 +63,7 @@ module Api
       def too_long_message
         I18n.t(
           'response.errors.note.review_too_long',
-          limit: current_user.utility.short_threshold
+          limit: current_user.utility.short_word_count_threshold
         )
       end
     end
