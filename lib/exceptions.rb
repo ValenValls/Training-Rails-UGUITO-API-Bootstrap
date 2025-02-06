@@ -5,4 +5,5 @@ module Exceptions
   class ClientForbiddenError < StandardError; end
   class ClientUnauthorizedError < StandardError; end
   class UtilityUnavailableError < StandardError; end
+  class MissingParametersError < StandardError; end
 end
