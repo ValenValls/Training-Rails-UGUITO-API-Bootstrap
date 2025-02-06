@@ -21,10 +21,14 @@ class Note < ApplicationRecord
   enum note_type: { review: 0, critique: 1 }
 
   def content_length
-    length_by_word_count = { 0..short_threshold => 'short',
-                             (short_threshold + 1)..medium_threshold => 'medium',
-                             (medium_threshold + 1).. => 'long' }
-    length_by_word_count.select { |count_range| count_range.include? word_count }.values.first
+    case word_count
+    when 0..short_threshold
+      'short'
+    when (short_threshold + 1)..medium_threshold
+      'medium'
+    else
+      'long'
+    end
   end
 
   def word_count
