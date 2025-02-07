@@ -50,16 +50,17 @@ module ExceptionHandler
   end
 
   def render_missing_parameters
-    message = I18n.t('response.errors.note.missing_params')
+    message = I18n.t('controller.errors.note.missing_params')
     render json: { error: message }, status: :bad_request
   end
 
   def render_note_type_invalid
-    message = I18n.t('response.errors.note.invalid_note_type')
+    message = I18n.t('controller.errors.note.invalid_note_type')
     render json: { error: message }, status: :unprocessable_entity
   end
 
-  def render_invalid_content_length(error)
-    render json: { error: error.message }, status: :unprocessable_entity
+  def render_invalid_content_length
+    message = I18n.t('controller.errors.note.review_too_long')
+    render json: { error: message }, status: :unprocessable_entity
   end
 end

@@ -34,7 +34,7 @@ en:
     errors:
       note:
         review_too_long: "a review cant have more than %{limit} words for %{utility_name}"
-  response:
+  controller:
     messages:
       note:
         created_succesfully: "Note created succesfully"

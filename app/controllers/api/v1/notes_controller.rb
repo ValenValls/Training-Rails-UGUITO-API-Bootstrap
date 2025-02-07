@@ -12,10 +12,10 @@ module Api
 
       def create
         note_params = process_note_params
-        valid_type?(note_params)
+        valid_type?(note_params[:note_type])
         context_params = { user_id: current_user.id, utility_id: current_user.utility_id }
         note = Note.create(note_params.merge(context_params))
-        raise Exceptions::ContentLengthInvalidError, too_long_message if note.errors.any?
+        raise Exceptions::ContentLengthInvalidError if note.errors.any?
         render json: { message: created_status_message }, status: :created
       end
 
@@ -51,20 +51,13 @@ module Api
         %i[title content note_type].all? { |param| note_params.key? param }
       end
 
-      def valid_type?(note_params)
-        return if %w[review critique].include? note_params[:note_type]
+      def valid_type?(type)
+        return if %w[review critique].include? type
         raise Exceptions::NoteTypeInvalidError
       end
 
       def created_status_message
-        I18n.t('response.messages.note.created_succesfully')
-      end
-
-      def too_long_message
-        I18n.t(
-          'response.errors.note.review_too_long',
-          limit: current_user.utility.short_word_count_threshold
-        )
+        I18n.t('controller.messages.note.created_succesfully')
       end
     end
   end
