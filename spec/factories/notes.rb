@@ -3,7 +3,7 @@ FactoryBot.define do
     utility
     user
     title { Faker::Lorem.sentence }
-    content { Faker::Lorem.sentence}
+    content { Faker::Lorem.sentence }
     note_type { 'critique' }
 
     trait :review do
