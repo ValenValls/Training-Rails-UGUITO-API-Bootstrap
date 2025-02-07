@@ -97,7 +97,9 @@ describe Api::V1::NotesController, type: :controller do
       end
 
       context 'when fetching notes with sorting' do
-        let(:notes_asc) { [create(:note, user: user, utility: user.utility, created_at: 1.day.ago)] + [create(:note, user: user, utility: user.utility)] }
+        let(:old_note) { create(:note, user: user, utility: user.utility, created_at: 1.day.ago) }
+        let(:new_note) { create(:note, user: user, utility: user.utility) }
+        let(:notes_asc) { [old_note, new_note] }
         let(:notes_desc) { notes_asc.reverse }
         let(:expected_asc) do
           ActiveModel::Serializer::CollectionSerializer.new(notes_asc, serializer: IndexNoteSerializer).to_json
@@ -240,7 +242,7 @@ describe Api::V1::NotesController, type: :controller do
       end
 
       context 'when creating with invalid type' do
-        let(:params_create) { { note: { type: 'cat', title: Faker::Lorem.sentence, content: Faker::Lorem.sentence(word_count: 100) } } }
+        let(:params_create) { { note: { type: 'cat', title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
 
         before do
           post :create, params: params_create
@@ -252,7 +254,8 @@ describe Api::V1::NotesController, type: :controller do
       end
 
       context 'when creating a review too long' do
-        let(:params_create) { { note: { type: 'review', title: Faker::Lorem.sentence, content: Faker::Lorem.sentence(word_count: 100) } } }
+        let(:long_content) { Faker::Lorem.sentence(word_count: 100) }
+        let(:params_create) { { note: { type: 'review', title: Faker::Lorem.sentence, content: long_content } } }
 
         before do
           post :create, params: params_create
