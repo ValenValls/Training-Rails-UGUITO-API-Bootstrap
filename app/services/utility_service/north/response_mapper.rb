@@ -50,7 +50,7 @@ module UtilityService
         {
           title: book['titulo'],
           author: book['autor'],
-          genre: genero['fantasia']
+          genre: book['genero']
         }
       end
     end
