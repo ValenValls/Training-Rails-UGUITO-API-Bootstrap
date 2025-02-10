@@ -17,6 +17,11 @@ module Api
         render json: { message: created_status_message }, status: :created
       end
 
+      def index_async
+        response = execute_async(RetrieveNotesWorker, current_user.id, index_async_params)
+        async_custom_response(response)
+      end
+
       private
 
       def paged_notes
@@ -63,6 +68,10 @@ module Api
 
       def created_status_message
         I18n.t('controller.messages.note.created_succesfully')
+      end
+
+      def index_async_params
+        { author: params.require(:author) }
       end
     end
   end
