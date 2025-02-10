@@ -60,7 +60,11 @@ module ExceptionHandler
   end
 
   def render_invalid_content_length
-    message = I18n.t('controller.errors.note.review_too_long')
+    message = I18n.t('controller.errors.note.review_too_long', limit: short_word_limit)
     render json: { error: message }, status: :unprocessable_entity
+  end
+
+  def short_word_limit
+    current_user.utility.short_word_count_threshold
   end
 end

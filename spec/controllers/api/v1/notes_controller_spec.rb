@@ -3,10 +3,6 @@ require 'rails_helper'
 shared_examples 'fetch filtered' do
   let(:other_type) { note_type == 'review' ? 'critique' : 'review' }
   let(:notes_expected) { create_list(:note, 2, note_type: note_type, user: user, utility: user.utility) }
-  let(:expected) do
-    ActiveModel::Serializer::CollectionSerializer.new(notes_expected,
-                                                      serializer: IndexNoteSerializer).to_json
-  end
 
   before do
     create_list(:note, 2, note_type: other_type, user: user, utility: user.utility)
@@ -36,16 +32,16 @@ end
 describe Api::V1::NotesController, type: :controller do
   describe 'GET #index' do
     let(:user_notes) { create_list(:note, 5, user: user, utility: user.utility) }
+    let(:expected) do
+      ActiveModel::Serializer::CollectionSerializer.new(notes_expected,
+                                                        serializer: IndexNoteSerializer).to_json
+    end
 
     context 'when there is a user logged in' do
       include_context 'with authenticated user'
 
       context 'when fetching all the notes for user' do
         let(:notes_expected) { user_notes }
-        let(:expected) do
-          ActiveModel::Serializer::CollectionSerializer.new(notes_expected,
-                                                            serializer: IndexNoteSerializer).to_json
-        end
 
         before do
           expected
@@ -65,10 +61,6 @@ describe Api::V1::NotesController, type: :controller do
         let(:page)            { 1 }
         let(:page_size)       { 2 }
         let(:notes_expected) { user_notes.first(2) }
-        let(:expected) do
-          ActiveModel::Serializer::CollectionSerializer.new(notes_expected,
-                                                            serializer: IndexNoteSerializer).to_json
-        end
 
         before do
           expected
@@ -99,23 +91,17 @@ describe Api::V1::NotesController, type: :controller do
       context 'when fetching notes with sorting' do
         let(:old_note) { create(:note, user: user, utility: user.utility, created_at: 1.day.ago) }
         let(:new_note) { create(:note, user: user, utility: user.utility) }
-        let(:notes_asc) { [old_note, new_note] }
-        let(:notes_desc) { notes_asc.reverse }
-        let(:expected_asc) do
-          ActiveModel::Serializer::CollectionSerializer.new(notes_asc, serializer: IndexNoteSerializer).to_json
-        end
-        let(:expected_desc) do
-          ActiveModel::Serializer::CollectionSerializer.new(notes_desc, serializer: IndexNoteSerializer).to_json
-        end
 
         context 'when ordering ASC' do
+          let(:notes_expected) { [old_note, new_note] }
+
           before do
-            expected_asc
+            expected
             get :index, params: { order: 'asc' }
           end
 
           it 'responds with notes in ascending order' do
-            expect(response_body.to_json).to eq(expected_asc)
+            expect(response_body.to_json).to eq(expected)
           end
 
           it 'responds with 200 status' do
@@ -124,13 +110,15 @@ describe Api::V1::NotesController, type: :controller do
         end
 
         context 'when ordering DESC' do
+          let(:notes_expected) { [new_note, old_note] }
+
           before do
-            expected_desc
+            expected
             get :index, params: { order: 'desc' }
           end
 
           it 'responds with notes in descending order' do
-            expect(response_body.to_json).to eq(expected_desc)
+            expect(response_body.to_json).to eq(expected)
           end
 
           it 'responds with 200 status' do

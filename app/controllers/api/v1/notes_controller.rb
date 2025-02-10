@@ -11,11 +11,9 @@ module Api
       end
 
       def create
-        note_params = process_note_params
-        valid_type?(note_params[:note_type])
-        context_params = { user_id: current_user.id, utility_id: current_user.utility_id }
-        note = Note.create(note_params.merge(context_params))
-        raise Exceptions::ContentLengthInvalidError if note.errors.any?
+        process_note_params
+        valid_type?(params[:note][:note_type])
+        create_note_transaction
         render json: { message: created_status_message }, status: :created
       end
 
@@ -39,21 +37,30 @@ module Api
         params.permit(%i[note_type])
       end
 
-      def process_note_params
-        raise Exceptions::MissingParametersError unless params[:note]
-        params[:note].transform_keys! { |key| key == 'type' ? 'note_type' : key }
-        note_params = params.require(:note).permit(:title, :content, :note_type)
-        return note_params if note_params_present?(note_params)
-        raise Exceptions::MissingParametersError
-      end
-
-      def note_params_present?(note_params)
-        %i[title content note_type].all? { |param| note_params.key? param }
-      end
-
       def valid_type?(type)
         return if %w[review critique].include? type
         raise Exceptions::NoteTypeInvalidError
+      end
+
+      def create_note_transaction
+        ActiveRecord::Base.transaction do
+          raise Exceptions::ContentLengthInvalidError if create_note_had_errors?
+        end
+      end
+
+      def create_note_had_errors?
+        Note.create(process_note_params.merge(context_params)).errors.any?
+      end
+
+      def context_params
+        { user_id: current_user.id, utility_id: current_user.utility_id }
+      end
+
+      def process_note_params
+        params.require(:note)
+        params[:note].transform_keys! { |key| key == 'type' ? 'note_type' : key }
+        params.require(:note).require(%i[title content note_type])
+        params.require(:note).permit(%i[title content note_type])
       end
 
       def created_status_message
