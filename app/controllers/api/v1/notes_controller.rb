@@ -13,7 +13,7 @@ module Api
       def create
         process_note_params
         valid_type?(params[:note][:note_type])
-        create_note_transaction
+        create_note
         render json: { message: created_status_message }, status: :created
       end
 
@@ -42,10 +42,8 @@ module Api
         raise Exceptions::NoteTypeInvalidError
       end
 
-      def create_note_transaction
-        ActiveRecord::Base.transaction do
-          raise Exceptions::ContentLengthInvalidError if create_note_had_errors?
-        end
+      def create_note
+        raise Exceptions::ContentLengthInvalidError if create_note_had_errors?
       end
 
       def create_note_had_errors?
