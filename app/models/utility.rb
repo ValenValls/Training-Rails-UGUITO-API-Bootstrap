@@ -15,6 +15,8 @@
 #  jsonb                                :jsonb
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
+#  short_word_count_threshold           :integer
+#  medium_word_count_threshold          :integer
 #
 class Utility < ApplicationRecord
   include EntityWithCode
@@ -28,6 +30,7 @@ class Utility < ApplicationRecord
 
   validates :name, uniqueness: true
   validates :name, :type, presence: true
+  validates :short_word_count_threshold, :medium_word_count_threshold, presence: true, numericality: { only_integer: true }
 
   store_accessor :integration_urls, :external_api_authentication_url, :books_data_url, :notes_data_url
 
