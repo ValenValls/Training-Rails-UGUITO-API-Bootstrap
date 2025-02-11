@@ -30,7 +30,8 @@ class Utility < ApplicationRecord
 
   validates :name, uniqueness: true
   validates :name, :type, presence: true
-  validates :short_word_count_threshold, :medium_word_count_threshold, presence: true, numericality: { only_integer: true }
+  validates :short_word_count_threshold, :medium_word_count_threshold, presence: true
+  validate :short_less_than_medium
 
   store_accessor :integration_urls, :external_api_authentication_url, :books_data_url, :notes_data_url
 
@@ -82,5 +83,14 @@ class Utility < ApplicationRecord
 
   def utility_type
     type.chomp('Utility')
+  end
+
+  def short_less_than_medium
+    return unless errors.blank? && short_word_count_threshold >= medium_word_count_threshold
+    errors.add(:short_word_count_threshold, error_message_less_than_medium)
+  end
+
+  def error_message_less_than_medium
+    I18n.t('active_record.errors.utility.less_than_medium')
   end
 end
