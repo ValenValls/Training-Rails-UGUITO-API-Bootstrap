@@ -29,7 +29,7 @@ module UtilityService
         notes.map do |note|
           {
             title: note['titulo'],
-            type: note['tipo'],
+            type: note['tipo'] == 'resenia' ? 'review' : 'critique',
             created_at: note['created_at'],
             content: note['fecha_creacion'],
             user: map_user(note['autor']),
