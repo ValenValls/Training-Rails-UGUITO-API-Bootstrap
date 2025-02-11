@@ -1,0 +1,17 @@
+panel 'Book' do
+  attributes_table_for book do
+    book = locals[:book]
+    row :title do
+      book.title
+    end
+    row :genre do
+      book.genre
+    end
+    row :author do
+      book.author
+    end
+    row :year do
+      book.year
+    end
+  end
+end
