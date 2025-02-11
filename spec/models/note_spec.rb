@@ -114,4 +114,11 @@ describe Note, type: :model do
 
     it_behaves_like 'review for utility'
   end
+
+  context 'when creating a review for another utility' do
+    let(:utility) { create(:utility, short_word_count_threshold: 30, medium_word_count_threshold: 60) }
+    let(:short_threshold) { 30 }
+
+    it_behaves_like 'review for utility'
+  end
 end
