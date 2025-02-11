@@ -7,6 +7,7 @@ ActiveAdmin.register SouthUtility do
   permit_params = %i[
     name code base_url external_api_key external_api_secret
     external_api_authentication_url books_data_url notes_data_url
+    short_word_count_threshold medium_word_count_threshold
   ]
 
   member_action :copy, method: :get do
@@ -30,6 +31,8 @@ ActiveAdmin.register SouthUtility do
     id_column
     column :name
     column :code
+    column :short_word_count_threshold
+    column :medium_word_count_threshold
     actions
   end
 
@@ -48,6 +51,8 @@ ActiveAdmin.register SouthUtility do
       f.input :external_api_authentication_url, as: :url
       f.input :books_data_url, as: :url
       f.input :notes_data_url, as: :url
+      f.input :short_word_count_threshold
+      f.input :medium_word_count_threshold
       f.actions
     end
   end

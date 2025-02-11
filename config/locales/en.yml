@@ -34,6 +34,8 @@ en:
     errors:
       note:
         review_too_long: "a review cant have more than %{limit} words for %{utility_name}"
+      utility:
+        less_than_medium: "must be less than medium word count threshold"
   controller:
     messages:
       note:
