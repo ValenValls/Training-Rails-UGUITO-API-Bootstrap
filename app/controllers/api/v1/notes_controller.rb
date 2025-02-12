@@ -11,9 +11,7 @@ module Api
       end
 
       def create
-        process_note_params
-        valid_type?(params[:note][:note_type])
-        create_note
+        current_user.notes.create!(validated_create_params)
         render json: { message: created_status_message }, status: :created
       end
 
@@ -33,32 +31,27 @@ module Api
       end
 
       def filtering_params
-        params.transform_keys! { |key| key == 'type' ? 'note_type' : key }
+        transform_type!(params)
         params.permit(%i[note_type])
       end
 
-      def valid_type?(type)
-        return if %w[review critique].include? type
-        raise Exceptions::NoteTypeInvalidError
-      end
-
-      def create_note
-        raise Exceptions::ContentLengthInvalidError if create_note_had_errors?
-      end
-
-      def create_note_had_errors?
-        Note.create(process_note_params.merge(context_params)).errors.any?
+      def validated_create_params
+        params.require(:note).require(%i[title content type])
+        transform_type!(params[:note])
+        params[:note].permit(%i[title content note_type]).merge(context_params)
       end
 
       def context_params
-        { user_id: current_user.id, utility_id: current_user.utility_id }
+        raise ActionController::ParameterMissing, 'Utility-ID header' if utility_code_header.nil?
+        { utility_id: utility_code_header }
       end
 
-      def process_note_params
-        params.require(:note)
-        params[:note].transform_keys! { |key| key == 'type' ? 'note_type' : key }
-        params.require(:note).require(%i[title content note_type])
-        params.require(:note).permit(%i[title content note_type])
+      def utility_code_header
+        @utility_code_header ||= request.headers['Utility-ID']
+      end
+
+      def transform_type!(hash)
+        hash.transform_keys! { |key| key == 'type' ? 'note_type' : key }
       end
 
       def created_status_message

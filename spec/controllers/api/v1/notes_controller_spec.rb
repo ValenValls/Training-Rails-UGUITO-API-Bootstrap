@@ -178,6 +178,14 @@ describe Api::V1::NotesController, type: :controller do
     context 'when there is a user logged in' do
       include_context 'with authenticated user'
 
+      let_it_be(:utilities) do
+        %i[north_utility south_utility]
+      end
+
+      include_context 'with utility' do
+        let_it_be(:utility) { create(utilities.sample) }
+      end
+
       context 'when creating a note' do
         let(:params_create) { { note: { title: Faker::Lorem.sentence, content: Faker::Lorem.sentence, type: 'critique' } } }
         let(:note_count) { Note.count }

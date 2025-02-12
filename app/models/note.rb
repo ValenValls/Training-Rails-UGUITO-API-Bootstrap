@@ -5,7 +5,7 @@
 #  id         :bigint(8)        not null, primary key
 #  title      :string           not null
 #  content    :string           not null
-#  note_type  :enum             not null
+#  note_type  :integer          not null
 #  user_id    :bigint(8)        not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
@@ -15,6 +15,7 @@ class Note < ApplicationRecord
   validates :user_id, :utility_id, :content, :note_type, :title,
             presence: true
   validate :validate_word_count
+  validate :validate_note_type
 
   belongs_to :user
   belongs_to :utility
@@ -37,11 +38,20 @@ class Note < ApplicationRecord
 
   private
 
+  def validate_note_type
+    return unless errors.blank? && invalid_type?
+    error_message = I18n.t('active_record.errors.note.invalid_type')
+    errors.add(:note_type, error_message)
+  end
+
+  def invalid_type?
+    %w[review critique].exclude? note_type
+  end
+
   def validate_word_count
     return unless errors.blank? && review_exceeds_word_limit?
     error_message = I18n.t(
       'active_record.errors.note.review_too_long',
-      utility_name: utility.name,
       limit: short_threshold
     )
     errors.add(:content, error_message)

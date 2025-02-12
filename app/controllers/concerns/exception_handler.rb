@@ -13,9 +13,8 @@ module ExceptionHandler
     end
     rescue_from Exceptions::UtilityUnavailableError, with: :render_utility_unavailable
     rescue_from Exceptions::InvalidParameterError, with: :render_invalid_parameter
-    rescue_from Exceptions::MissingParametersError, with: :render_missing_parameters
-    rescue_from Exceptions::ContentLengthInvalidError, with: :render_invalid_content_length
-    rescue_from Exceptions::NoteTypeInvalidError, with: :render_note_type_invalid
+    rescue_from ActiveRecord::RecordInvalid, with: :render_note_creation_error
+    rescue_from ArgumentError, with: :render_incorrect_argument
   end
 
   private
@@ -31,6 +30,11 @@ module ExceptionHandler
     render_error(
       :param_is_missing, message: message, meta: error.message, status: :bad_request
     )
+  end
+
+  def render_incorrect_argument
+    message = I18n.t('controller.errors.note.invalid_note_type')
+    render json: { error: message }, status: :unprocessable_entity
   end
 
   def render_nothing_not_found
@@ -49,19 +53,8 @@ module ExceptionHandler
     render_error(:utility_unavailable, status: :internal_server_error)
   end
 
-  def render_missing_parameters
-    message = I18n.t('controller.errors.note.missing_params')
-    render json: { error: message }, status: :bad_request
-  end
-
-  def render_note_type_invalid
-    message = I18n.t('controller.errors.note.invalid_note_type')
-    render json: { error: message }, status: :unprocessable_entity
-  end
-
-  def render_invalid_content_length
-    message = I18n.t('controller.errors.note.review_too_long', limit: short_word_limit)
-    render json: { error: message }, status: :unprocessable_entity
+  def render_note_creation_error(error)
+    render json: { error: error }, status: :unprocessable_entity
   end
 
   def short_word_limit
