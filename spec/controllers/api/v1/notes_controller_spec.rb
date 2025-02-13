@@ -55,24 +55,19 @@ describe Api::V1::NotesController, type: :controller do
         before do
           create_user_critiques
           create_user_reviews
+          get :index, params: params
         end
 
         context 'when fetching reviews' do
           let(:notes_expected) { create_user_reviews }
-
-          before do
-            get :index, params: { type: 'review' }
-          end
+          let(:params) { { type: 'review' } }
 
           it_behaves_like 'fetching the expected notes'
         end
 
         context 'when fetching critiques' do
           let(:notes_expected) { create_user_critiques }
-
-          before do
-            get :index, params: { type: 'critique' }
-          end
+          let(:params) { { type: 'critique' } }
 
           it_behaves_like 'fetching the expected notes'
         end
@@ -85,24 +80,19 @@ describe Api::V1::NotesController, type: :controller do
         before do
           create_old_note
           create_new_note
+          get :index, params: params
         end
 
         context 'when ordering ASC' do
           let(:notes_expected) { [create_old_note, create_new_note] }
-
-          before do
-            get :index, params: { order: 'asc' }
-          end
+          let(:params) { { order: 'asc' } }
 
           it_behaves_like 'fetching the expected notes'
         end
 
         context 'when ordering DESC' do
           let(:notes_expected) { [create_new_note, create_old_note] }
-
-          before do
-            get :index, params: { order: 'desc' }
-          end
+          let(:params) { { order: 'desc' } }
 
           it_behaves_like 'fetching the expected notes'
         end
@@ -141,13 +131,14 @@ describe Api::V1::NotesController, type: :controller do
       end
 
       context 'when fetching a invalid note' do
+        before do
+          get :show, params: params
+        end
+
         context 'when fetching a note from other user' do
           let(:other_user) { create(:user) }
           let(:other_user_note) { create(:note, user: other_user) }
-
-          before do
-            get :show, params: { id: other_user_note.id }
-          end
+          let(:params) { { id: other_user_note.id } }
 
           it 'responds with not found' do
             expect(response).to have_http_status(:not_found)
@@ -156,10 +147,7 @@ describe Api::V1::NotesController, type: :controller do
 
         context 'when fetching a non-existing note' do
           let(:non_existing_id) { Note.maximum(:id).to_i + 1 }
-
-          before do
-            get :show, params: { id: non_existing_id }
-          end
+          let(:params) { { id: non_existing_id } }
 
           it 'responds with not found' do
             expect(response).to have_http_status(:not_found)
@@ -190,13 +178,13 @@ describe Api::V1::NotesController, type: :controller do
           let_it_be(:utility) { create(utilities.sample) }
         end
 
+        before do
+          post :create, params: params
+        end
+
         context 'when creating a note' do
           let(:note_type) { %w[critique review].sample }
           let(:params) { { note: { title: Faker::Lorem.word, content: Faker::Lorem.word, type: 'critique' } } }
-
-          before do
-            post :create, params: params
-          end
 
           it 'responds with 201 status' do
             expect(response).to have_http_status(:created)
@@ -219,11 +207,7 @@ describe Api::V1::NotesController, type: :controller do
           let(:note_type) { %w[critique review].sample }
           let(:params_create) { { note: { type: note_type, title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
           let(:required_params) { %i[title content type] }
-          let(:params_missing_one) { params_create[:note].except(required_params.sample) }
-
-          before do
-            post :create, params: params_missing_one
-          end
+          let(:params) { params_create[:note].except(required_params.sample) }
 
           it 'responds with 400 status' do
             expect(response).to have_http_status(:bad_request)
@@ -235,11 +219,7 @@ describe Api::V1::NotesController, type: :controller do
         end
 
         context 'when creating with invalid type' do
-          let(:params_create) { { note: { type: Faker::Name.name, title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
-
-          before do
-            post :create, params: params_create
-          end
+          let(:params) { { note: { type: Faker::Name.name, title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
 
           it 'responds with 422 status' do
             expect(response).to have_http_status(:unprocessable_entity)
@@ -252,11 +232,7 @@ describe Api::V1::NotesController, type: :controller do
 
         context 'when creating a review too long' do
           let(:long_content) { Faker::Lorem.sentence(word_count: utility.short_word_count_threshold + 1) }
-          let(:params_create) { { note: { type: 'review', title: Faker::Lorem.sentence, content: long_content } } }
-
-          before do
-            post :create, params: params_create
-          end
+          let(:params) { { note: { type: 'review', title: Faker::Lorem.sentence, content: long_content } } }
 
           it 'responds with 422 status' do
             expect(response).to have_http_status(:unprocessable_entity)
