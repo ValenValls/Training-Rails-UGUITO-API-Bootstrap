@@ -3,7 +3,7 @@ module ExceptionHandler
   extend ActiveSupport::Concern
 
   included do
-    rescue_from ActionController::ParameterMissing, with: :render_incorrect_parameter
+    rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
     rescue_from ActionController::UnpermittedParameters, with: :render_incorrect_parameter
     rescue_from ActiveRecord::RecordNotFound, with: :render_nothing_not_found
     rescue_from Exceptions::ClientForbiddenError, with: :render_client_forbidden
@@ -14,7 +14,7 @@ module ExceptionHandler
     rescue_from Exceptions::UtilityUnavailableError, with: :render_utility_unavailable
     rescue_from Exceptions::InvalidParameterError, with: :render_invalid_parameter
     rescue_from ActiveRecord::RecordInvalid, with: :render_note_creation_error
-    rescue_from ArgumentError, with: :render_incorrect_argument
+    rescue_from ArgumentError, with: :render_incorrect_parameter
   end
 
   private
@@ -25,14 +25,12 @@ module ExceptionHandler
     render_error(error.message)
   end
 
-  def render_incorrect_parameter(error)
-    message = I18n.t('errors.messages.internal_server_error')
-    render_error(
-      :param_is_missing, message: message, meta: error.message, status: :bad_request
-    )
+  def render_parameter_missing
+    message = I18n.t('controller.errors.missing_parameters')
+    render json: { error: message }, status: :bad_request
   end
 
-  def render_incorrect_argument
+  def render_incorrect_parameter
     message = I18n.t('controller.errors.note.invalid_note_type')
     render json: { error: message }, status: :unprocessable_entity
   end
@@ -54,7 +52,16 @@ module ExceptionHandler
   end
 
   def render_note_creation_error(error)
-    render json: { error: error }, status: :unprocessable_entity
+    note = error.record
+    if note.errors.details[:content].any? { |e| e[:error] == :review_too_long }
+      render json: review_too_long_message, status: :unprocessable_entity
+    else
+      render json: note.errors.full_messages, status: :unprocessable_entity
+    end
+  end
+
+  def review_too_long_message
+    { message: I18n.t('controller.errors.note.review_too_long') }
   end
 
   def short_word_limit

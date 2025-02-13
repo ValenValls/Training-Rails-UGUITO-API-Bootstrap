@@ -42,12 +42,7 @@ module Api
       end
 
       def context_params
-        raise ActionController::ParameterMissing, 'Utility-ID header' if utility_code_header.nil?
-        { utility_id: utility_code_header }
-      end
-
-      def utility_code_header
-        @utility_code_header ||= request.headers['Utility-ID']
+        { utility_id: utility.id }
       end
 
       def transform_type!(hash)

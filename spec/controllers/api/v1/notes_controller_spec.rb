@@ -1,15 +1,6 @@
 require 'rails_helper'
 
-shared_examples 'fetch filtered' do
-  let(:other_type) { note_type == 'review' ? 'critique' : 'review' }
-  let(:notes_expected) { create_list(:note, 2, note_type: note_type, user: user, utility: user.utility) }
-
-  before do
-    create_list(:note, 2, note_type: other_type, user: user, utility: user.utility)
-    expected
-    get :index, params: { type: note_type }
-  end
-
+shared_examples 'fetching the expected notes' do
   it 'responds with expected notes' do
     expect(response_body.to_json).to eq(expected)
   end
@@ -19,111 +10,101 @@ shared_examples 'fetch filtered' do
   end
 end
 
-shared_examples 'creating missing parameters' do
-  before do
-    post :create, params: params_create
-  end
-
-  it 'responds with 400 status' do
-    expect(response).to have_http_status(:bad_request)
-  end
-end
-
 describe Api::V1::NotesController, type: :controller do
   describe 'GET #index' do
-    let(:user_notes) { create_list(:note, 5, user: user, utility: user.utility) }
     let(:expected) do
       ActiveModel::Serializer::CollectionSerializer.new(notes_expected,
                                                         serializer: IndexNoteSerializer).to_json
     end
+    let(:params) { {} }
+    let(:utilities) { %i[north_utility south_utility] }
+    let(:create_user_notes) { create_list(:note, 5, user: user, utility: create(utilities.sample)) }
 
     context 'when there is a user logged in' do
       include_context 'with authenticated user'
 
       context 'when fetching all the notes for user' do
-        let(:notes_expected) { user_notes }
+        let(:notes_expected) { create_user_notes }
 
         before do
-          expected
-          get :index
+          create_user_notes
+          get :index, params: params
         end
 
-        it 'responds with the expected notes json' do
-          expect(response_body.to_json).to eq(expected)
-        end
-
-        it 'responds with 200 status' do
-          expect(response).to have_http_status(:ok)
-        end
+        it_behaves_like 'fetching the expected notes'
       end
 
       context 'when fetching notes with page and page size params' do
         let(:page)            { 1 }
         let(:page_size)       { 2 }
-        let(:notes_expected) { user_notes.first(2) }
+        let(:notes_expected) { create_user_notes.first(2) }
+        let(:params) { { page: page, page_size: page_size } }
 
         before do
-          expected
-          get :index, params: { page: page, page_size: page_size }
+          create_user_notes
+          get :index, params: params
         end
 
-        it 'responds with the expected notes' do
-          expect(response_body.to_json).to eq(expected)
-        end
-
-        it 'responds with 200 status' do
-          expect(response).to have_http_status(:ok)
-        end
+        it_behaves_like 'fetching the expected notes'
       end
 
-      context 'when fetching reviews using filters' do
-        let(:note_type) { 'review' }
+      context 'when fetching notes using filters' do
+        let(:create_user_reviews) { create_list(:note, 2, :review, user: user, utility: user.utility) }
+        let(:create_user_critiques) { create_list(:note, 2, user: user, utility: user.utility) }
 
-        it_behaves_like 'fetch filtered'
-      end
+        before do
+          create_user_critiques
+          create_user_reviews
+        end
 
-      context 'when fetching critiques using filters' do
-        let(:note_type) { 'critique' }
+        context 'when fetching reviews' do
+          let(:notes_expected) { create_user_reviews }
 
-        it_behaves_like 'fetch filtered'
+          before do
+            get :index, params: { type: 'review' }
+          end
+
+          it_behaves_like 'fetching the expected notes'
+        end
+
+        context 'when fetching critiques' do
+          let(:notes_expected) { create_user_critiques }
+
+          before do
+            get :index, params: { type: 'critique' }
+          end
+
+          it_behaves_like 'fetching the expected notes'
+        end
       end
 
       context 'when fetching notes with sorting' do
-        let(:old_note) { create(:note, user: user, utility: user.utility, created_at: 1.day.ago) }
-        let(:new_note) { create(:note, user: user, utility: user.utility) }
+        let(:create_old_note) { create(:note, user: user, utility: user.utility, created_at: 1.day.ago) }
+        let(:create_new_note) { create(:note, user: user, utility: user.utility) }
+
+        before do
+          create_old_note
+          create_new_note
+        end
 
         context 'when ordering ASC' do
-          let(:notes_expected) { [old_note, new_note] }
+          let(:notes_expected) { [create_old_note, create_new_note] }
 
           before do
-            expected
             get :index, params: { order: 'asc' }
           end
 
-          it 'responds with notes in ascending order' do
-            expect(response_body.to_json).to eq(expected)
-          end
-
-          it 'responds with 200 status' do
-            expect(response).to have_http_status(:ok)
-          end
+          it_behaves_like 'fetching the expected notes'
         end
 
         context 'when ordering DESC' do
-          let(:notes_expected) { [new_note, old_note] }
+          let(:notes_expected) { [create_new_note, create_old_note] }
 
           before do
-            expected
             get :index, params: { order: 'desc' }
           end
 
-          it 'responds with notes in descending order' do
-            expect(response_body.to_json).to eq(expected)
-          end
-
-          it 'responds with 200 status' do
-            expect(response).to have_http_status(:ok)
-          end
+          it_behaves_like 'fetching the expected notes'
         end
       end
     end
@@ -142,10 +123,13 @@ describe Api::V1::NotesController, type: :controller do
       include_context 'with authenticated user'
 
       context 'when fetching a valid note' do
-        let(:note) { create(:note, user: user, utility: user.utility) }
-        let(:expected) { NoteSerializer.new(note, root: false).to_json }
+        let(:create_note) { create(:note, user: user, utility: user.utility) }
+        let(:expected) { NoteSerializer.new(create_note, root: false).to_json }
 
-        before { get :show, params: { id: note.id } }
+        before do
+          create_note
+          get :show, params: { id: create_note.id }
+        end
 
         it 'responds with the note json' do
           expect(response.body).to eq(expected)
@@ -157,10 +141,29 @@ describe Api::V1::NotesController, type: :controller do
       end
 
       context 'when fetching a invalid note' do
-        before { get :show, params: { id: Faker::Number.number } }
+        context 'when fetching a note from other user' do
+          let(:other_user) { create(:user) }
+          let(:other_user_note) { create(:note, user: other_user) }
 
-        it 'responds with 404 status' do
-          expect(response).to have_http_status(:not_found)
+          before do
+            get :show, params: { id: other_user_note.id }
+          end
+
+          it 'responds with not found' do
+            expect(response).to have_http_status(:not_found)
+          end
+        end
+
+        context 'when fetching a non-existing note' do
+          let(:non_existing_id) { Note.maximum(:id).to_i + 1 }
+
+          before do
+            get :show, params: { id: non_existing_id }
+          end
+
+          it 'responds with not found' do
+            expect(response).to have_http_status(:not_found)
+          end
         end
       end
     end
@@ -178,87 +181,90 @@ describe Api::V1::NotesController, type: :controller do
     context 'when there is a user logged in' do
       include_context 'with authenticated user'
 
-      let_it_be(:utilities) do
-        %i[north_utility south_utility]
-      end
-
-      include_context 'with utility' do
-        let_it_be(:utility) { create(utilities.sample) }
-      end
-
-      context 'when creating a note' do
-        let(:params_create) { { note: { title: Faker::Lorem.sentence, content: Faker::Lorem.sentence, type: 'critique' } } }
-        let(:note_count) { Note.count }
-
-        before do
-          note_count
-          post :create, params: params_create
+      context 'when the utility id is on the header' do
+        let_it_be(:utilities) do
+          %i[north_utility south_utility]
         end
 
-        it 'responds with 201 status' do
-          expect(response).to have_http_status(:created)
+        include_context 'with utility' do
+          let_it_be(:utility) { create(utilities.sample) }
         end
 
-        it 'creates a new note in the database' do
-          expect(Note.count).to be(note_count + 1)
-          created_note = Note.last
-          expect(created_note.title).to eq(params_create[:note][:title])
-          expect(created_note.content).to eq(params_create[:note][:content])
-          expect(created_note.note_type).to eq('critique')
-          expect(created_note.user).to eq(user)
-        end
-      end
+        context 'when creating a note' do
+          let(:note_type) { %w[critique review].sample }
+          let(:params) { { note: { title: Faker::Lorem.word, content: Faker::Lorem.word, type: 'critique' } } }
 
-      context 'when creating a note without note' do
-        before do
-          post :create
-        end
+          before do
+            post :create, params: params
+          end
 
-        it 'responds with 400 status' do
-          expect(response).to have_http_status(:bad_request)
-        end
-      end
+          it 'responds with 201 status' do
+            expect(response).to have_http_status(:created)
+          end
 
-      context 'when creating a note without title' do
-        let(:params_create) { { note: { content: Faker::Lorem.sentence, type: 'critique' } } }
+          it 'responds with the correct message' do
+            expect(response_body['message']).to eq(I18n.t('controller.messages.note.created_succesfully'))
+          end
 
-        it_behaves_like 'creating missing parameters'
-      end
+          it 'creates a new note in the database' do
+            expect { post :create, params: params }.to change(Note, :count).by(1)
+          end
 
-      context 'when creating a note without type' do
-        let(:params_create) { { note: { content: Faker::Lorem.sentence, title: Faker::Lorem.sentence } } }
-
-        it_behaves_like 'creating missing parameters'
-      end
-
-      context 'when creating a note without content' do
-        let(:params_create) { { note: { type: 'critique', title: Faker::Lorem.sentence } } }
-
-        it_behaves_like 'creating missing parameters'
-      end
-
-      context 'when creating with invalid type' do
-        let(:params_create) { { note: { type: 'cat', title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
-
-        before do
-          post :create, params: params_create
+          it 'the new note is from the user' do
+            expect(Note.last.user).to eq(user)
+          end
         end
 
-        it 'responds with 422 status' do
-          expect(response).to have_http_status(:unprocessable_entity)
+        context 'when missing parameters' do
+          let(:note_type) { %w[critique review].sample }
+          let(:params_create) { { note: { type: note_type, title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
+          let(:required_params) { %i[title content type] }
+          let(:params_missing_one) { params_create[:note].except(required_params.sample) }
+
+          before do
+            post :create, params: params_missing_one
+          end
+
+          it 'responds with 400 status' do
+            expect(response).to have_http_status(:bad_request)
+          end
+
+          it 'responds with the correct error message' do
+            expect(response_body['error']).to eq(I18n.t('controller.errors.missing_parameters'))
+          end
         end
-      end
 
-      context 'when creating a review too long' do
-        let(:long_content) { Faker::Lorem.sentence(word_count: 100) }
-        let(:params_create) { { note: { type: 'review', title: Faker::Lorem.sentence, content: long_content } } }
+        context 'when creating with invalid type' do
+          let(:params_create) { { note: { type: Faker::Name.name, title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
 
-        before do
-          post :create, params: params_create
+          before do
+            post :create, params: params_create
+          end
+
+          it 'responds with 422 status' do
+            expect(response).to have_http_status(:unprocessable_entity)
+          end
+
+          it 'responds with the correct error message' do
+            expect(response_body['error']).to eq(I18n.t('controller.errors.note.invalid_note_type'))
+          end
         end
 
-        it 'responds with 422 status' do
-          expect(response).to have_http_status(:unprocessable_entity)
+        context 'when creating a review too long' do
+          let(:long_content) { Faker::Lorem.sentence(word_count: utility.short_word_count_threshold + 1) }
+          let(:params_create) { { note: { type: 'review', title: Faker::Lorem.sentence, content: long_content } } }
+
+          before do
+            post :create, params: params_create
+          end
+
+          it 'responds with 422 status' do
+            expect(response).to have_http_status(:unprocessable_entity)
+          end
+
+          it 'responds with the correct message' do
+            expect(response_body['error']).to eq(I18n.t('controller.errors.note.invalid_note_type'))
+          end
         end
       end
     end
