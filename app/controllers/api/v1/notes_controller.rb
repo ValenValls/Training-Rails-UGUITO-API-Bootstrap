@@ -10,6 +10,11 @@ module Api
         render json: current_user.notes.find(params[:id]), status: :ok
       end
 
+      def create
+        current_user.notes.create!(validated_create_params)
+        render json: { message: created_status_message }, status: :created
+      end
+
       private
 
       def paged_notes
@@ -26,8 +31,26 @@ module Api
       end
 
       def filtering_params
-        params.transform_keys! { |key| key == 'type' ? 'note_type' : key }
+        transform_type!(params)
         params.permit(%i[note_type])
+      end
+
+      def validated_create_params
+        params.require(:note).require(%i[title content type])
+        transform_type!(params[:note])
+        params[:note].permit(%i[title content note_type]).merge(context_params)
+      end
+
+      def context_params
+        { utility_id: utility.id }
+      end
+
+      def transform_type!(hash)
+        hash.transform_keys! { |key| key == 'type' ? 'note_type' : key }
+      end
+
+      def created_status_message
+        I18n.t('controller.messages.note.created_succesfully')
       end
     end
   end
