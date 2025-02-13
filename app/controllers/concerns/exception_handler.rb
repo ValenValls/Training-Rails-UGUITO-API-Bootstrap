@@ -54,14 +54,17 @@ module ExceptionHandler
   def render_note_creation_error(error)
     note = error.record
     if note.errors.details[:content].any? { |e| e[:error] == :review_too_long }
-      render json: review_too_long_message, status: :unprocessable_entity
+      render json: { error: review_too_long_message(note.utility) }, status: :unprocessable_entity
     else
-      render json: note.errors.full_messages, status: :unprocessable_entity
+      render json: { error: error.message }, status: :unprocessable_entity
     end
   end
 
-  def review_too_long_message
-    { message: I18n.t('controller.errors.note.review_too_long') }
+  def review_too_long_message(utility)
+    I18n.t(
+      'controller.errors.note.review_too_long',
+      limit: utility.short_word_count_threshold
+    )
   end
 
   def short_word_limit

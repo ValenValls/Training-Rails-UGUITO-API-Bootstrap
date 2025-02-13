@@ -10,6 +10,16 @@ shared_examples 'fetching the expected notes' do
   end
 end
 
+shared_examples 'creating with errors' do
+  it 'responds with expected error status' do
+    expect(response).to have_http_status(expected_status)
+  end
+
+  it 'responds with expected error message' do
+    expect(response_body['error']).to eq(expected_error_message)
+  end
+
+end
 describe Api::V1::NotesController, type: :controller do
   describe 'GET #index' do
     let(:expected) do
@@ -208,39 +218,27 @@ describe Api::V1::NotesController, type: :controller do
           let(:params_create) { { note: { type: note_type, title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
           let(:required_params) { %i[title content type] }
           let(:params) { params_create[:note].except(required_params.sample) }
+          let(:expected_status) { :bad_request }
+          let(:expected_error_message) { I18n.t('controller.errors.missing_parameters') }
 
-          it 'responds with 400 status' do
-            expect(response).to have_http_status(:bad_request)
-          end
-
-          it 'responds with the correct error message' do
-            expect(response_body['error']).to eq(I18n.t('controller.errors.missing_parameters'))
-          end
+          it_behaves_like 'creating with errors'
         end
 
         context 'when creating with invalid type' do
           let(:params) { { note: { type: Faker::Name.name, title: Faker::Lorem.sentence, content: Faker::Lorem.sentence } } }
+          let(:expected_status) { :unprocessable_entity }
+          let(:expected_error_message) { I18n.t('controller.errors.note.invalid_note_type') }
 
-          it 'responds with 422 status' do
-            expect(response).to have_http_status(:unprocessable_entity)
-          end
-
-          it 'responds with the correct error message' do
-            expect(response_body['error']).to eq(I18n.t('controller.errors.note.invalid_note_type'))
-          end
+          it_behaves_like 'creating with errors'
         end
 
         context 'when creating a review too long' do
           let(:long_content) { Faker::Lorem.sentence(word_count: utility.short_word_count_threshold + 1) }
           let(:params) { { note: { type: 'review', title: Faker::Lorem.sentence, content: long_content } } }
+          let(:expected_status) { :unprocessable_entity }
+          let(:expected_error_message) { I18n.t('controller.errors.note.review_too_long', limit: utility.short_word_count_threshold) }
 
-          it 'responds with 422 status' do
-            expect(response).to have_http_status(:unprocessable_entity)
-          end
-
-          it 'responds with the correct message' do
-            expect(response_body['error']).to eq(I18n.t('controller.errors.note.invalid_note_type'))
-          end
+          it_behaves_like 'creating with errors'
         end
       end
     end

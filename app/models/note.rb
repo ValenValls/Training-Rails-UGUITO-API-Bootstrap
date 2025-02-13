@@ -54,7 +54,7 @@ class Note < ApplicationRecord
       'active_record.errors.note.review_too_long',
       limit: short_threshold
     )
-    errors.add(:content, :review_too_long, error_message)
+    errors.add(:content, :review_too_long, message: error_message)
   end
 
   def review_exceeds_word_limit?
