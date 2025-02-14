@@ -22,8 +22,8 @@ panel 'Utility' do
     row :books_data_url do
       utility.books_data_url
     end
-    row :notes_data_url do
-      utility.notes_data_url
+    row :retrieve_notes_url do
+      utility.retrieve_notes_url
     end
   end
 end
