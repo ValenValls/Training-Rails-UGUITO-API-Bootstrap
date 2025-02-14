@@ -25,5 +25,11 @@ panel 'Utility' do
     row :retrieve_notes_url do
       utility.retrieve_notes_url
     end
+    row :short_word_count_threshold do
+      utility.short_word_count_threshold
+    end
+    row :medium_word_count_threshold do
+      utility.medium_word_count_threshold
+    end
   end
 end
