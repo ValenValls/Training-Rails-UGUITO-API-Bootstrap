@@ -33,7 +33,8 @@ class Utility < ApplicationRecord
   validates :short_word_count_threshold, :medium_word_count_threshold, presence: true
   validate :short_less_than_medium
 
-  store_accessor :integration_urls, :external_api_authentication_url, :books_data_url, :notes_data_url
+  store_accessor :integration_urls, :external_api_authentication_url,
+                 :books_data_url, :retrieve_notes_url
 
   def generate_entity_code
     return if code.present? && !code.to_i.zero?
