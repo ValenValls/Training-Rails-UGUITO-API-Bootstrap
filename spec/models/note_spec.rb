@@ -39,7 +39,7 @@ shared_examples 'review for utility' do
 
   describe '#word_count' do
     it 'has correct word count' do
-      note = create(:note, :review, utility: utility, sentece_word_count: 34)
+      note = create(:note, :review, utility: utility, sentece_word_count: 14)
       expect(note.word_count).to be(34)
     end
   end
