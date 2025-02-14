@@ -39,8 +39,8 @@ shared_examples 'review for utility' do
 
   describe '#word_count' do
     it 'has correct word count' do
-      note = create(:note, :review, utility: utility, sentece_word_count: 34)
-      expect(note.word_count).to be(34)
+      note = create(:note, :review, utility: utility, sentece_word_count: 14)
+      expect(note.word_count).to be(14)
     end
   end
 
@@ -111,6 +111,13 @@ describe Note, type: :model do
   context 'when creating a review for south' do
     let(:utility) { create(:south_utility) }
     let(:short_threshold) { 60 }
+
+    it_behaves_like 'review for utility'
+  end
+
+  context 'when creating a review for another utility' do
+    let(:utility) { create(:utility, short_word_count_threshold: 30, medium_word_count_threshold: 60) }
+    let(:short_threshold) { 30 }
 
     it_behaves_like 'review for utility'
   end

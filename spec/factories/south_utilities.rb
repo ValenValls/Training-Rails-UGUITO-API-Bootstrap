@@ -16,5 +16,11 @@ FactoryBot.define do
     notes_data_url do
       'Notas'
     end
+    short_word_count_threshold do
+      60
+    end
+    medium_word_count_threshold do
+      120
+    end
   end
 end
