@@ -2,7 +2,7 @@ require 'rails_helper'
 
 shared_examples 'fetching the expected notes' do
   it 'responds with expected notes' do
-    expect(response_body.to_json).to eq(expected)
+    expect(response_body).to eq(expected)
   end
 
   it 'responds with 200 status' do
@@ -18,26 +18,25 @@ shared_examples 'creating with errors' do
   it 'responds with expected error message' do
     expect(response_body['error']).to eq(expected_error_message)
   end
-
 end
 describe Api::V1::NotesController, type: :controller do
   describe 'GET #index' do
-    let(:expected) do
-      ActiveModel::Serializer::CollectionSerializer.new(notes_expected,
-                                                        serializer: IndexNoteSerializer).to_json
-    end
-    let(:params) { {} }
-    let(:utilities) { %i[north_utility south_utility] }
-    let(:create_user_notes) { create_list(:note, 5, user: user, utility: create(utilities.sample)) }
-
     context 'when there is a user logged in' do
       include_context 'with authenticated user'
+      let(:expected) do
+        ActiveModel::Serializer::CollectionSerializer.new(expected_notes,
+                                                          serializer: IndexNoteSerializer).as_json.map(&:stringify_keys)
+      end
+      let(:params) { {} }
+      let(:utilities) { %i[north_utility south_utility] }
+      let(:utility) { create(utilities.sample) }
+      let(:user_notes) { create_list(:note, 5, user: user, utility: utility) }
 
       context 'when fetching all the notes for user' do
-        let(:notes_expected) { create_user_notes }
+        let(:expected_notes) { user_notes }
 
         before do
-          create_user_notes
+          user_notes
           get :index, params: params
         end
 
@@ -47,11 +46,11 @@ describe Api::V1::NotesController, type: :controller do
       context 'when fetching notes with page and page size params' do
         let(:page)            { 1 }
         let(:page_size)       { 2 }
-        let(:notes_expected) { create_user_notes.first(2) }
+        let(:expected_notes) { user_notes.first(2) }
         let(:params) { { page: page, page_size: page_size } }
 
         before do
-          create_user_notes
+          user_notes
           get :index, params: params
         end
 
@@ -59,24 +58,24 @@ describe Api::V1::NotesController, type: :controller do
       end
 
       context 'when fetching notes using filters' do
-        let(:create_user_reviews) { create_list(:note, 2, :review, user: user, utility: user.utility) }
-        let(:create_user_critiques) { create_list(:note, 2, user: user, utility: user.utility) }
+        let(:user_reviews) { create_list(:note, 2, :review, user: user, utility: user.utility) }
+        let(:user_critiques) { create_list(:note, 2, user: user, utility: user.utility) }
 
         before do
-          create_user_critiques
-          create_user_reviews
+          user_critiques
+          user_reviews
           get :index, params: params
         end
 
         context 'when fetching reviews' do
-          let(:notes_expected) { create_user_reviews }
+          let(:expected_notes) { user_reviews }
           let(:params) { { type: 'review' } }
 
           it_behaves_like 'fetching the expected notes'
         end
 
         context 'when fetching critiques' do
-          let(:notes_expected) { create_user_critiques }
+          let(:expected_notes) { user_critiques }
           let(:params) { { type: 'critique' } }
 
           it_behaves_like 'fetching the expected notes'
@@ -84,24 +83,24 @@ describe Api::V1::NotesController, type: :controller do
       end
 
       context 'when fetching notes with sorting' do
-        let(:create_old_note) { create(:note, user: user, utility: user.utility, created_at: 1.day.ago) }
-        let(:create_new_note) { create(:note, user: user, utility: user.utility) }
+        let(:old_note) { create(:note, user: user, utility: user.utility, created_at: 1.day.ago) }
+        let(:new_note) { create(:note, user: user, utility: user.utility) }
 
         before do
-          create_old_note
-          create_new_note
+          old_note
+          new_note
           get :index, params: params
         end
 
         context 'when ordering ASC' do
-          let(:notes_expected) { [create_old_note, create_new_note] }
+          let(:expected_notes) { [old_note, new_note] }
           let(:params) { { order: 'asc' } }
 
           it_behaves_like 'fetching the expected notes'
         end
 
         context 'when ordering DESC' do
-          let(:notes_expected) { [create_new_note, create_old_note] }
+          let(:expected_notes) { [new_note, old_note] }
           let(:params) { { order: 'desc' } }
 
           it_behaves_like 'fetching the expected notes'
@@ -123,12 +122,12 @@ describe Api::V1::NotesController, type: :controller do
       include_context 'with authenticated user'
 
       context 'when fetching a valid note' do
-        let(:create_note) { create(:note, user: user, utility: user.utility) }
-        let(:expected) { NoteSerializer.new(create_note, root: false).to_json }
+        let(:note) { create(:note, user: user, utility: user.utility) }
+        let(:expected) { NoteSerializer.new(note, root: false).to_json }
 
         before do
-          create_note
-          get :show, params: { id: create_note.id }
+          note
+          get :show, params: { id: note.id }
         end
 
         it 'responds with the note json' do
@@ -236,7 +235,7 @@ describe Api::V1::NotesController, type: :controller do
           let(:long_content) { Faker::Lorem.sentence(word_count: utility.short_word_count_threshold + 1) }
           let(:params) { { note: { type: 'review', title: Faker::Lorem.sentence, content: long_content } } }
           let(:expected_status) { :unprocessable_entity }
-          let(:expected_error_message) { I18n.t('controller.errors.note.review_too_long', limit: utility.short_word_count_threshold) }
+          let(:expected_error_message) { 'Content ' << I18n.t('active_record.errors.note.review_too_long', limit: utility.short_word_count_threshold) }
 
           it_behaves_like 'creating with errors'
         end

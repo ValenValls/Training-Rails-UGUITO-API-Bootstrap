@@ -30,9 +30,16 @@ module ExceptionHandler
     render json: { error: message }, status: :bad_request
   end
 
-  def render_incorrect_parameter
-    message = I18n.t('controller.errors.note.invalid_note_type')
-    render json: { error: message }, status: :unprocessable_entity
+  def render_incorrect_parameter(error)
+    message = case error.message
+              when /is not a valid note_type/
+                status = :unprocessable_entity
+                I18n.t('controller.errors.note.invalid_note_type')
+              else
+                status = :bad_request
+                error.message
+              end
+    render json: { error: message }, status: status
   end
 
   def render_nothing_not_found
@@ -52,22 +59,10 @@ module ExceptionHandler
   end
 
   def render_note_creation_error(error)
-    note = error.record
-    if note.errors.details[:content].any? { |e| e[:error] == :review_too_long }
-      render json: { error: review_too_long_message(note.utility) }, status: :unprocessable_entity
-    else
-      render json: { error: error.message }, status: :unprocessable_entity
-    end
+    render json: { error: trim_validation_error(error.message) }, status: :unprocessable_entity
   end
 
-  def review_too_long_message(utility)
-    I18n.t(
-      'controller.errors.note.review_too_long',
-      limit: utility.short_word_count_threshold
-    )
-  end
-
-  def short_word_limit
-    current_user.utility.short_word_count_threshold
+  def trim_validation_error(message)
+    message.gsub(I18n.t('errors.messages.model_invalid').sub(/%.*/, ''), '')
   end
 end

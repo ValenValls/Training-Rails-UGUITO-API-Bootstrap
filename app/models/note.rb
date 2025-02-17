@@ -39,13 +39,9 @@ class Note < ApplicationRecord
   private
 
   def validate_note_type
-    return unless errors.blank? && invalid_type?
+    return unless errors.blank? && !self.class.note_types.keys.include?(note_type)
     error_message = I18n.t('active_record.errors.note.invalid_type')
     errors.add(:note_type, error_message)
-  end
-
-  def invalid_type?
-    %w[review critique].exclude? note_type
   end
 
   def validate_word_count
@@ -54,7 +50,7 @@ class Note < ApplicationRecord
       'active_record.errors.note.review_too_long',
       limit: short_threshold
     )
-    errors.add(:content, :review_too_long, message: error_message)
+    errors.add(:content, message: error_message)
   end
 
   def review_exceeds_word_limit?
