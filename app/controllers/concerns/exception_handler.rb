@@ -3,7 +3,7 @@ module ExceptionHandler
   extend ActiveSupport::Concern
 
   included do
-    rescue_from ActionController::ParameterMissing, with: :render_incorrect_parameter
+    rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
     rescue_from ActionController::UnpermittedParameters, with: :render_incorrect_parameter
     rescue_from ActiveRecord::RecordNotFound, with: :render_nothing_not_found
     rescue_from Exceptions::ClientForbiddenError, with: :render_client_forbidden
@@ -13,6 +13,8 @@ module ExceptionHandler
     end
     rescue_from Exceptions::UtilityUnavailableError, with: :render_utility_unavailable
     rescue_from Exceptions::InvalidParameterError, with: :render_invalid_parameter
+    rescue_from ActiveRecord::RecordInvalid, with: :render_note_creation_error
+    rescue_from ArgumentError, with: :render_incorrect_parameter
   end
 
   private
@@ -23,11 +25,21 @@ module ExceptionHandler
     render_error(error.message)
   end
 
+  def render_parameter_missing
+    message = I18n.t('controller.errors.missing_parameters')
+    render json: { error: message }, status: :bad_request
+  end
+
   def render_incorrect_parameter(error)
-    message = I18n.t('errors.messages.internal_server_error')
-    render_error(
-      :param_is_missing, message: message, meta: error.message, status: :bad_request
-    )
+    message = case error.message
+              when /is not a valid note_type/
+                status = :unprocessable_entity
+                I18n.t('controller.errors.note.invalid_note_type')
+              else
+                status = :bad_request
+                error.message
+              end
+    render json: { error: message }, status: status
   end
 
   def render_nothing_not_found
@@ -44,5 +56,13 @@ module ExceptionHandler
 
   def render_utility_unavailable
     render_error(:utility_unavailable, status: :internal_server_error)
+  end
+
+  def render_note_creation_error(error)
+    render json: { error: trim_validation_error(error.message) }, status: :unprocessable_entity
+  end
+
+  def trim_validation_error(message)
+    message.gsub(I18n.t('errors.messages.model_invalid').sub(/%.*/, ''), '')
   end
 end

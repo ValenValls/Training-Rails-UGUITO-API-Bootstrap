@@ -33,4 +33,13 @@ en:
   active_record:
     errors:
       note:
-        review_too_long: "has too many words, reviews have a limit of %{limit} words for %{utility_name}"
+        review_too_long: " A review has a limit of %{limit} words"
+        invalid_type: " can only be review or critique."
+  controller:
+    messages:
+      note:
+        created_succesfully: "Note created succesfully."
+    errors:
+      note:
+        invalid_note_type: "Invalid note type."
+      missing_parameters: "Missing required parameters."

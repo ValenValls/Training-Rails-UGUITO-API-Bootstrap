@@ -33,4 +33,13 @@ es:
   active_record:
     errors:
       note:
-        review_too_long: "tiene demasiadas palabras, las reviews tienen un limite de %{limit} palabras para %{utility_name}"
+        review_too_long: "Una reseña no puede superar las %{limit} palabras."
+        invalid_type: " solo puede ser review o critique."
+  controller:
+    messages:
+      note:
+        created_succesfully: "Nota creada con exito."
+    errors:
+      note:
+        invalid_note_type: "El tipo de nota no es válido."
+      missing_parameters: "Faltan parametros requeridos."

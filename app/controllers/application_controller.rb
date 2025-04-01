@@ -45,6 +45,12 @@ class ApplicationController < ActionController::Base
     render json: resource, status: :created
   end
 
+  def render_error(identifier, message: nil, meta: nil, status: :bad_request, utility: nil)
+    errors = ErrorResponseBuilder.new(status, utility)
+                                 .add_error(identifier, message: message, meta: meta)
+    render json: errors, status: errors.status
+  end
+
   def access_denied(exception)
     reset_session
     redirect_to '/admin/login', alert: exception.message
