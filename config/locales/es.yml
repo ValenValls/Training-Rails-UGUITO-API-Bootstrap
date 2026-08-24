@@ -34,6 +34,8 @@ es:
     errors:
       note:
         review_too_long: "una reseña no puede superar las %{limit} palabras para %{utility_name}"
+      utility:
+        less_than_medium: "debe ser menor que medium word count threshold"
   controller:
     messages:
       note:
